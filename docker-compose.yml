@@ -1,0 +1,50 @@
+version: '3.2'
+services:
+  private-docker-registry:
+    image: registry:2
+    container_name: private_docker_registry
+    ports:
+      - "127.0.0.1:5000:5000"
+    environment:
+      - VIRTUAL_HOST=pdr.yourdomain.com
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=pdr.yourdomain.com
+      - LETSENCRYPT_EMAIL=youremail@gmail.com
+      - REGISTRY_AUTH=htpasswd
+      - "REGISTRY_AUTH_HTPASSWD_REALM=My Super Realm"
+      - REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - ./registry:/var/lib/registry
+      - ./auth:/auth
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: always
+  jwildernginxproxy:
+    image: jwilder/nginx-proxy
+    container_name: jwildernginxproxy
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhostd:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: always
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: letsencrypt_nginx_proxy_companion
+    environment:
+      - NGINX_PROXY_CONTAINER=jwildernginxproxy
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhostd:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: always
+volumes:
+  certs:
+  html:
+  vhostd:
