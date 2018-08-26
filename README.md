@@ -1,4 +1,4 @@
-# docker-private-repo-template
+# Secure private docker registry template
 
 The idea is described here:  
 https://mtarnawa.org/2017/11/10/running-secured-private-docker-registry-nginx-proxy-letsencrypt/
